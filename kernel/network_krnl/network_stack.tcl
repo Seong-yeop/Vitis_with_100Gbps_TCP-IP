@@ -135,10 +135,10 @@ update_compile_order -fileset sources_1
 create_ip -name arp_server_subnet -vendor ethz.systems.fpga -library hls -version 1.1 -module_name arp_server_subnet_ip 
 update_compile_order -fileset sources_1
 
-create_ip -name ipv4 -vendor ethz.systems.fpga -library hls -version 0.1 -module_name ipv4_ip 
+create_ip -name ipv4_top -vendor ethz.systems.fpga -library hls -version 0.1 -module_name ipv4_ip 
 update_compile_order -fileset sources_1
 
-create_ip -name udp -vendor ethz.systems.fpga -library hls -version 0.4 -module_name udp_ip 
+create_ip -name udp_top -vendor ethz.systems.fpga -library hls -version 0.4 -module_name udp_ip 
 update_compile_order -fileset sources_1
 
 #create_ip -name iperf_udp -vendor ethz.systems.fpga -library hls -version 0.9 -module_name iperf_udp_ip 
