@@ -40,12 +40,16 @@ int main()
 	hls::stream<appNotification> notifications("notifications");
 	hls::stream<appReadRequest> readRequest("readRequest");
 	hls::stream<ap_uint<16> > rxMetaData("rxMetaData");
-	hls::stream<net_axis<DATA_WIDTH> > rxData("rxData");
+	// hls::stream<net_axis<DATA_WIDTH> > rxData("rxData");
+	hls::stream<hls::axis<ap_uint<512>, 0, 0, 0>> rxData("rxData");
+
 	hls::stream<ipTuple> openConnection("openConnection");
 	hls::stream<openStatus> openConStatus("openConStatus");
 	hls::stream<ap_uint<16> > closeConnection("closeConnection");
 	hls::stream<appTxMeta> txMetaData("txMetaData");
-	hls::stream<net_axis<DATA_WIDTH> > txData("txData");
+	// hls::stream<net_axis<DATA_WIDTH> > txData("txData");
+	hls::stream<hls::axis<ap_uint<512>, 0, 0, 0>> txData("txData");
+
 	hls::stream<appTxRsp> txStatus("txStatus");
 	ap_uint<1> runExperiment;
 	ap_uint<1> dualModeEn;
@@ -141,9 +145,12 @@ int main()
 		}
 		while (!txData.empty())
 		{
-			net_axis<DATA_WIDTH> currWord = txData.read();
-			// printLE(std::cout, currWord);
-			// std::cout << std::endl;
+			// net_axis<DATA_WIDTH> currWord = txData.read();
+			hls::axis<ap_uint<512>, 0, 0, 0> currWord_hls = txData.read();
+
+			printLE(std::cout, currWord_hls.data); 
+			std::cout << std::endl;
+			std::cout << "iperf test" << std::endl;
 
 		}
 		if (!closeConnection.empty())
