@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+    	
+    <storageModule moduleId="org.eclipse.cdt.core.settings">
+        		
+        <cconfiguration id="com.xilinx.ide.accel.config.hwlink.sw_emu.1691731073">
+            			
+            <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.xilinx.ide.accel.config.hwlink.sw_emu.1691731073" moduleId="org.eclipse.cdt.core.settings" name="Emulation-SW">
+                				
+                <externalSettings/>
+                				
+                <extensions>
+                    					
+                    <extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="com.xilinx.ide.accel.VppErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+                    				
+                </extensions>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+                				
+                <configuration buildProperties="" description="" id="com.xilinx.ide.accel.config.hwlink.sw_emu.1691731073" name="Emulation-SW" parent="com.xilinx.ide.accel.config.hwlink.sw_emu">
+                    					
+                    <folderInfo id="com.xilinx.ide.accel.config.hwlink.sw_emu.1691731073." name="/" resourcePath="">
+                        						
+                        <toolChain id="com.xilinx.ide.accel.toolchain.hwLinker.sw_emu.1605392044" name="Hardware Linker" superClass="com.xilinx.ide.accel.toolchain.hwLinker.sw_emu">
+                            							
+                            <targetPlatform id="com.xilinx.ide.accel.config.hwlink.sw_emu.1691731073..1496902188" name=""/>
+                            							
+                            <builder buildPath="${workspace_loc:/network_system_hw_link}/Emulation-SW" enableAutoBuild="true" id="com.xilinx.ide.accel.builder.link.309695179" managedBuildOn="true" name="Link Project Builder.Emulation-SW" superClass="com.xilinx.ide.accel.builder.link"/>
+                            							
+                            <tool id="com.xilinx.ide.accel.tool.hwLinker.745425746" name="V++ Kernel Linker" superClass="com.xilinx.ide.accel.tool.hwLinker"/>
+                            						
+                        </toolChain>
+                        					
+                    </folderInfo>
+                    				
+                </configuration>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+            		
+        </cconfiguration>
+        		
+        <cconfiguration id="com.xilinx.ide.accel.config.hwlink.hw_emu.1947429999">
+            			
+            <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.xilinx.ide.accel.config.hwlink.hw_emu.1947429999" moduleId="org.eclipse.cdt.core.settings" name="Emulation-HW">
+                				
+                <externalSettings/>
+                				
+                <extensions>
+                    					
+                    <extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="com.xilinx.ide.accel.VppErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+                    				
+                </extensions>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+                				
+                <configuration buildProperties="" description="" id="com.xilinx.ide.accel.config.hwlink.hw_emu.1947429999" name="Emulation-HW" parent="com.xilinx.ide.accel.config.hwlink.hw_emu">
+                    					
+                    <folderInfo id="com.xilinx.ide.accel.config.hwlink.hw_emu.1947429999." name="/" resourcePath="">
+                        						
+                        <toolChain id="com.xilinx.ide.accel.toolchain.hwLinker.hw_emu.1133004887" name="Hardware Linker" superClass="com.xilinx.ide.accel.toolchain.hwLinker.hw_emu">
+                            							
+                            <targetPlatform id="com.xilinx.ide.accel.config.hwlink.hw_emu.1947429999..2112367899" name=""/>
+                            							
+                            <builder buildPath="${workspace_loc:/network_system_hw_link}/Emulation-HW" enableAutoBuild="true" id="com.xilinx.ide.accel.builder.link.765465713" managedBuildOn="true" name="Link Project Builder.Emulation-HW" superClass="com.xilinx.ide.accel.builder.link"/>
+                            							
+                            <tool id="com.xilinx.ide.accel.tool.hwLinker.981273002" name="V++ Kernel Linker" superClass="com.xilinx.ide.accel.tool.hwLinker"/>
+                            						
+                        </toolChain>
+                        					
+                    </folderInfo>
+                    				
+                </configuration>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+            		
+        </cconfiguration>
+        		
+        <cconfiguration id="com.xilinx.ide.accel.config.hwlink.hw.137710744">
+            			
+            <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.xilinx.ide.accel.config.hwlink.hw.137710744" moduleId="org.eclipse.cdt.core.settings" name="Hardware">
+                				
+                <externalSettings/>
+                				
+                <extensions>
+                    					
+                    <extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="com.xilinx.ide.accel.VppErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+                    				
+                </extensions>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+                				
+                <configuration buildProperties="" description="" id="com.xilinx.ide.accel.config.hwlink.hw.137710744" name="Hardware" parent="com.xilinx.ide.accel.config.hwlink.hw">
+                    					
+                    <folderInfo id="com.xilinx.ide.accel.config.hwlink.hw.137710744." name="/" resourcePath="">
+                        						
+                        <toolChain id="com.xilinx.ide.accel.toolchain.hwLinker.hw.419598601" name="Hardware Linker" superClass="com.xilinx.ide.accel.toolchain.hwLinker.hw">
+                            							
+                            <targetPlatform id="com.xilinx.ide.accel.config.hwlink.hw.137710744..318518088" name=""/>
+                            							
+                            <builder buildPath="${workspace_loc:/network_system_hw_link}/Hardware" enableAutoBuild="true" id="com.xilinx.ide.accel.builder.link.1510175765" managedBuildOn="true" name="Link Project Builder.Hardware" superClass="com.xilinx.ide.accel.builder.link"/>
+                            							
+                            <tool id="com.xilinx.ide.accel.tool.hwLinker.378778813" name="V++ Kernel Linker" superClass="com.xilinx.ide.accel.tool.hwLinker"/>
+                            						
+                        </toolChain>
+                        					
+                    </folderInfo>
+                    				
+                </configuration>
+                			
+            </storageModule>
+            			
+            <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+            		
+        </cconfiguration>
+        	
+    </storageModule>
+    	
+    <storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+    	
+    <storageModule moduleId="cdtBuildSystem" version="4.0.0">
+        		
+        <project id="network_system_hw_link.com.xilinx.ide.accel.hwLinkProjectType.586941608" name="Hw Link Project" projectType="com.xilinx.ide.accel.hwLinkProjectType"/>
+        	
+    </storageModule>
+    	
+    <storageModule moduleId="scannerConfiguration">
+        		
+        <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+        	
+    </storageModule>
+    
+</cproject>
