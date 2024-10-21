@@ -32,7 +32,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace hls;
 
-
 int main()
 {
 	hls::stream<ap_uint<16> > listenPort("listenPort");
@@ -59,7 +58,7 @@ int main()
 	ap_uint<32>    timeInSeconds;
 	ap_uint<64>    timeInCycles;
 	ap_uint<16>	   useIpAddr = 2;
-	ap_uint<16>	   regBasePort = 5001;
+	ap_uint<16>	   regBasePort = 80;
 
 	ap_uint<32> ipAddress0 = 0x01010101;
 	ap_uint<32> ipAddress1 = 0x01010102;
@@ -79,7 +78,7 @@ int main()
 	timeInCycles = 1000;
 
 	int count = 0;
-	while (count < 10000)
+	while (count < 100)
 	{
 		useConn = 2;
 		runExperiment = 0;
@@ -129,10 +128,38 @@ int main()
 
 		if (!openConnection.empty())
 		{
-			openConnection.read();
-			std::cout << "Opening connection.. at cycle" << count << std::endl;
+			ipTuple connection = openConnection.read();
+			std::cout << "Opening connection IP:"<<std::hex<<connection.ip_address<<" Port:"<<std::dec<<connection.ip_port<<".. at cycle" << count << std::endl;
 			openConStatus.write(openStatus(123+count, true));
 		}
+
+		if (!rxMetaData.empty())
+		{
+			ap_uint<16> meta = rxMetaData.read();
+			std::cout << "Received Metadata for session ID: " << std::dec << meta << std::endl;
+
+			// Prepare a read request for the incoming data length if needed
+			appReadRequest readReq(meta, 1024); // Example: reading 1024 bytes, adjust as needed
+			readRequest.write(readReq);
+		}
+
+		while (!rxData.empty())
+		{
+			// Read incoming data from the stream
+			hls::axis<ap_uint<512>, 0, 0, 0> currWord_hls = rxData.read();
+
+			// Print the received data for debugging
+			printLE(std::cout, currWord_hls.data);
+			std::cout << std::endl;
+			std::cout << "Received Data Packet" << std::endl;
+
+			if (currWord_hls.last)
+			{
+				std::cout << "End of data packet" << std::endl;
+				// Perform any additional actions upon receiving the last word of the packet
+			}
+		}
+
 		if (!txMetaData.empty())
 		{
 			appTxMeta meta = txMetaData.read();
@@ -162,3 +189,5 @@ int main()
 	}
 	return 0;
 }
+
+

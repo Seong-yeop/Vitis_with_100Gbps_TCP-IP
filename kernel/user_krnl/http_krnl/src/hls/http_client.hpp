@@ -28,6 +28,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ************************************************/
 #pragma once
 
+#include <hls_stream.h>
+
+#include "http_lib.h"
+#include "tcp_utils.h"
+
 #include "http_client_config.hpp"
 #include "../../../../common/include/axi_utils.hpp"
 #include "../../../../common/include/packet.hpp"

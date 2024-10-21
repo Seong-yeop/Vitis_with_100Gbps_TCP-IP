@@ -7,14 +7,21 @@ create_clock -period ${CLOCK_PERIOD} -name default
 
 set_top ${PROJECT_NAME}
 
-add_files ${CMAKE_CURRENT_SOURCE_DIR}/http_client.cpp -cflags "-I${CMAKE_CURRENT_BINARY_DIR}"
-
-
-add_files -tb ${CMAKE_CURRENT_SOURCE_DIR}/test_http_client.cpp
-
-
 #Check which command
 set command [lindex $argv 2]
+set module [lindex $argv 3]
+
+# add_files ${CMAKE_CURRENT_SOURCE_DIR}/http_client.cpp -cflags "-I${CMAKE_CURRENT_BINARY_DIR}"
+add_files "${CMAKE_CURRENT_SOURCE_DIR}/http_client.cpp \
+   ${CMAKE_CURRENT_SOURCE_DIR}/headline_parser.cc \
+   ${CMAKE_CURRENT_SOURCE_DIR}/listen_port.cc \
+   ${CMAKE_CURRENT_SOURCE_DIR}/method_parser.cc \
+   ${CMAKE_CURRENT_SOURCE_DIR}/req_payload_parser.cc \
+   ${CMAKE_CURRENT_SOURCE_DIR}/request_processor.cc" \
+   -cflags "-I${CMAKE_CURRENT_BINARY_DIR}"
+
+# add_files -tb ${CMAKE_CURRENT_SOURCE_DIR}/test_http_client.cpp
+add_files -tb hw/hls/$module.spec.cc -cflags "-Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
 
 if {$command == "synthesis"} {
    csynth_design
@@ -28,6 +35,5 @@ if {$command == "synthesis"} {
 } else {
    puts "No valid command specified. Use vitis_hls -f make.tcl <synthesis|csim|ip> ."
 }
-
 
 exit

@@ -26,9 +26,13 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABI
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ************************************************/
+#include <iostream>
+
 #include "http_client_config.hpp"
 #include "http_client.hpp"
-#include <iostream>
+#include "listen_port.h"
+#include "request_processor.h"
+#include "../../../../common/include/communication.hpp"
 
 //Buffers responses coming from the TCP stack
 void status_handler(hls::stream<appTxRsp>&				txStatus,
@@ -108,301 +112,168 @@ void rxDataBuffer_handler(hls::stream<ap_axiu<WIDTH, 0, 0, 0> >& rxData,
 	}
 }
 
-template <int WIDTH>
-void client(hls::stream<ipTuple>&				openConnection,
-            hls::stream<openStatus>& 			openConStatusBuffer,
-				hls::stream<ap_uint<16> >&			closeConnection,
-				hls::stream<appTxMeta>&				txMetaDataBuffer,
-				hls::stream<net_axis<WIDTH> >& 	txDataBuffer,
-				hls::stream<internalAppTxRsp>&	txStatus,
-				hls::stream<bool>&					startSignal,
-				hls::stream<bool>&					stopSignal,
-				ap_uint<1>		runExperiment,
-				ap_uint<1>		dualModeEn,
-				ap_uint<14>		useConn,
-				ap_uint<16>		useIpAddr, //total ip addr used
-				ap_uint<8> 		pkgWordCount,
-				ap_uint<8>		packetGap,
-            	ap_uint<32>    timeInSeconds,
-            	ap_uint<16>		regBasePort,
-				ap_uint<32>		regIpAddress0,
-				ap_uint<32>		regIpAddress1,
-				ap_uint<32>		regIpAddress2,
-				ap_uint<32>		regIpAddress3,
-				ap_uint<32>		regIpAddress4,
-				ap_uint<32>		regIpAddress5,
-				ap_uint<32>		regIpAddress6,
-				ap_uint<32>		regIpAddress7,
-				ap_uint<32>		regIpAddress8,
-				ap_uint<32>		regIpAddress9)
-{
 
+template <int WIDTH>
+void client(hls::stream<ipTuple>& openConnection,
+                 hls::stream<openStatus>& openConStatusBuffer,
+                 hls::stream<ap_uint<16>>& closeConnection,
+                 hls::stream<appTxMeta>& txMetaDataBuffer,
+                 hls::stream<net_axis<WIDTH>>& txDataBuffer,
+                 hls::stream<internalAppTxRsp>& txStatus,
+                 hls::stream<bool>& startSignal,
+                 hls::stream<bool>& stopSignal,
+                 ap_uint<1> runExperiment,
+                 ap_uint<1> dualModeEn,
+                 ap_uint<14> useConn,
+                 ap_uint<16> useIpAddr, // Total IP addresses used
+                 ap_uint<8> pkgWordCount,
+                 ap_uint<8> packetGap,
+                 ap_uint<32> timeInSeconds,
+                 ap_uint<16> regBasePort,
+                 ap_uint<32> regIpAddress0,
+                 ap_uint<32> regIpAddress1,
+                 ap_uint<32> regIpAddress2,
+                 ap_uint<32> regIpAddress3,
+                 ap_uint<32> regIpAddress4,
+                 ap_uint<32> regIpAddress5,
+                 ap_uint<32> regIpAddress6,
+                 ap_uint<32> regIpAddress7,
+                 ap_uint<32> regIpAddress8,
+                 ap_uint<32> regIpAddress9) {
 #pragma HLS PIPELINE II=1
 #pragma HLS INLINE off
 
-	enum iperfFsmStateType {IDLE, INIT_CON, WAIT_CON, CONSTRUCT_HEADER, INIT_RUN, START_PKG, CHECK_REQ, WRITE_PKG, CHECK_TIME, PKG_GAP};
-	static iperfFsmStateType iperfFsmState = IDLE;
+    enum clientFsmStateType {IDLE, INIT_CON, WAIT_CON, SEND_REQUEST, SEND_BODY, CHECK_TIME};
+    static clientFsmStateType clientFsmState = IDLE;
 
-	static ap_uint<14> numConnections = 0;
-	static ap_uint<16> currentSessionID;
-	static ap_uint<14> sessionIt = 0;
-	static ap_uint<14> closeIt = 0;
-	static bool timeOver = false;
-	static ap_uint<8> wordCount = 0;
-	static ap_uint<4> ipAddressIdx = 0;
-	static iperfTcpHeader<WIDTH> header;
-	static ap_uint<8> packetGapCounter = 0;
-	static bool stopSend = false;
+    static ap_uint<14> numConnections = 0;
+    static ap_uint<16> currentSessionID;
+    static ap_uint<14> sessionIt = 0;
+    static ap_uint<14> closeIt = 0;
+    static bool timeOver = false;
+    static bool stopSend = false;
 
-	/*
-	 * CLIENT FSM
-	 */
-	switch (iperfFsmState)
-	{
-	case IDLE:
-		//done do nothing
-		sessionIt = 0;
-		closeIt = 0;
-		numConnections = 0;
-		timeOver = false;
-		ipAddressIdx = 0;
-		stopSend = false;
-		if (runExperiment)
-		{
-			iperfFsmState = INIT_CON;
-		}
-		break;
-	case INIT_CON:
-		if (sessionIt < useConn)
-		{
-			ipTuple openTuple;
-			switch (ipAddressIdx)
-			{
-			case 0:
-				openTuple.ip_address = regIpAddress0;
-				break;
-			case 1:
-				openTuple.ip_address = regIpAddress1;
-				break;
-			case 2:
-				openTuple.ip_address = regIpAddress2;
-				break;
-			case 3:
-				openTuple.ip_address = regIpAddress3;
-				break;
-			case 4:
-				openTuple.ip_address = regIpAddress4;
-				break;
-			case 5:
-				openTuple.ip_address = regIpAddress5;
-				break;
-			case 6:
-				openTuple.ip_address = regIpAddress6;
-				break;
-			case 7:
-				openTuple.ip_address = regIpAddress7;
-				break;
-			case 8:
-				openTuple.ip_address = regIpAddress8;
-				break;
-			case 9:
-				openTuple.ip_address = regIpAddress9;
-				break;
-			}
-			openTuple.ip_port = 5001;
-			openConnection.write(openTuple);
-			ipAddressIdx++;
-			if (ipAddressIdx == useIpAddr)
-			{
- 				ipAddressIdx = 0;
-			}
-		}
-		sessionIt++;
-		if (sessionIt == useConn)
-		{
-			sessionIt = 0;
-			iperfFsmState = WAIT_CON;
-		}
-		break;
-	case WAIT_CON:
-		if (!openConStatusBuffer.empty())
-		{
-			openStatus status = openConStatusBuffer.read();
-			if (status.success)
-			{
-				//experimentID[sessionIt] = status.sessionID;
-				std::cout << "Connection successfully opened." << std::endl;
-				txMetaDataBuffer.write(appTxMeta(status.sessionID, IPERF_TCP_HEADER_SIZE/8));
-				numConnections++;
-			}
-			else
-			{
-				std::cout << "Connection could not be opened." << std::endl;
-			}
-			sessionIt++;
-			if (sessionIt == useConn) //maybe move outside
-			{
-				startSignal.write(true);
-				sessionIt = 0;
-				iperfFsmState = CONSTRUCT_HEADER;
-			}
-		}
-		break;
-	case CONSTRUCT_HEADER:
-		header.clear();
-		header.setDualMode(dualModeEn);
-		header.setListenPort(5001);
-		header.setSeconds(timeInSeconds);
-		if (sessionIt == numConnections)
-		{
-			sessionIt = 0;
-			iperfFsmState = CHECK_REQ;
-		}
-		else if (!txStatus.empty())
-		{
-			internalAppTxRsp resp = txStatus.read();
-			if (resp.error == 0)
-			{
-				currentSessionID = resp.sessionID;
-				iperfFsmState = INIT_RUN;
-			}
-			else
-			{
-				//Check if connection was torn down
-				if (resp.error == 1)
-				{
-					std::cout << "Connection was torn down. " << resp.sessionID << std::endl;
-					numConnections--;
-				}
-			}
-		}
-		break;
-	case INIT_RUN:
-		{
-			net_axis<WIDTH> headerWord;
-			headerWord.last = 0;
+    static ap_uint<4> ipAddressIdx = 0;
+    static ap_uint<8> packetGapCounter = 0;
 
+    switch (clientFsmState) {
+        case IDLE:
+            sessionIt = 0;
+            closeIt = 0;
+            numConnections = 0;
+            timeOver = false;
+            ipAddressIdx = 0;
+            stopSend = false;
+            if (runExperiment) {
+                clientFsmState = INIT_CON;
+            }
+            break;
+        case INIT_CON:
+            if (sessionIt < useConn) {
+                ipTuple openTuple;
+                switch (ipAddressIdx) {
+                    case 0: openTuple.ip_address = regIpAddress0; break;
+                    case 1: openTuple.ip_address = regIpAddress1; break;
+                    case 2: openTuple.ip_address = regIpAddress2; break;
+                    case 3: openTuple.ip_address = regIpAddress3; break;
+                    case 4: openTuple.ip_address = regIpAddress4; break;
+                    case 5: openTuple.ip_address = regIpAddress5; break;
+                    case 6: openTuple.ip_address = regIpAddress6; break;
+                    case 7: openTuple.ip_address = regIpAddress7; break;
+                    case 8: openTuple.ip_address = regIpAddress8; break;
+                    case 9: openTuple.ip_address = regIpAddress9; break;
+                }
+                openTuple.ip_port = 80; // HTTP port
+                openConnection.write(openTuple);
+                ipAddressIdx++;
+                if (ipAddressIdx == useIpAddr) {
+                    ipAddressIdx = 0;
+                }
+            }
+            sessionIt++;
+			// std::cout << "Connection " << sessionIt << " opened." << std::endl;
+            if (sessionIt == useConn) {
+                sessionIt = 0;
+                clientFsmState = WAIT_CON;
+            }
+			break;
+		case WAIT_CON: 
+			// std::cout << "Waiting for connection to open." << std::endl;
+            if (!openConStatusBuffer.empty()) {
+				std::cout << "Connection opened." << std::endl;
+                openStatus status = openConStatusBuffer.read();
+                if (status.success) {
+                    std::cout << "Connection successfully opened." << std::endl;
+                    txMetaDataBuffer.write(appTxMeta(status.sessionID, 256)); // Length for header
+                    currentSessionID = status.sessionID;
+                    clientFsmState = SEND_REQUEST;
+                } else {
+                    std::cout << "Connection could not be opened." << std::endl;
+                }
+            }
+            break;
+        case SEND_REQUEST: {
+			std::cout << "Sending request." << std::endl;
+            // HTTP Request Header
+            const char* header = "POST /test HTTP/1.1\r\nHost: example.com\r\nContent-Length: 13\r\n\r\n";
+            int headerLen = strlen(header);
+            net_axis<WIDTH> headerWord;
+            
+            for (int i = 0; i < (headerLen / (WIDTH / 8)) + 1; i++) {
+                #pragma HLS UNROLL
+                memset(&headerWord.data, 0, sizeof(headerWord.data)); // Clear data
+                int offset = i * (WIDTH / 8);
+                int len = std::min((int)(WIDTH / 8), headerLen - offset);
+                memcpy(&headerWord.data, header + offset, len);
+                headerWord.keep = (len == (WIDTH / 8)) ? -1 : (1 << len) - 1;
+                headerWord.last = (i == (headerLen / (WIDTH / 8)));
+                txDataBuffer.write(headerWord);
+            }
 
-				headerWord.last = 1;
-				txMetaDataBuffer.write(appTxMeta(currentSessionID, pkgWordCount*(WIDTH/8)));
-				sessionIt++;
-				iperfFsmState = CONSTRUCT_HEADER;
+            clientFsmState = SEND_BODY;
+            break;
+        }
+        case SEND_BODY: {
+            // HTTP Request Body
+            const char* body = "Hello, World!";
+            int bodyLen = strlen(body);
+            net_axis<WIDTH> bodyWord;
 
-			for (int i = 0; i < (WIDTH/64); i++)
-			{
-				#pragma HLS UNROLL
-				headerWord.keep(i*8+7, i*8) = 0xff;
-			}
-			txDataBuffer.write(headerWord);
+            for (int i = 0; i < (bodyLen / (WIDTH / 8)) + 1; i++) {
+                #pragma HLS UNROLL
+                memset(&bodyWord.data, 0, sizeof(bodyWord.data)); // Clear data
+                int offset = i * (WIDTH / 8);
+                int len = std::min((int)(WIDTH / 8), bodyLen - offset);
+                memcpy(&bodyWord.data, body + offset, len);
+                bodyWord.keep = (len == (WIDTH / 8)) ? -1 : (1 << len) - 1;
+                bodyWord.last = (i == (bodyLen / (WIDTH / 8)));
+                txDataBuffer.write(bodyWord);
+            }
+            clientFsmState = CHECK_TIME;
+            break;
+        }
+        case CHECK_TIME:
+            if (stopSend && closeIt == numConnections) {
+                clientFsmState = IDLE;
+            } else {
+                if (stopSend) {
+                    closeConnection.write(currentSessionID);
+                    closeIt++;
+                }
 
-		}
-		break;
-	case CHECK_REQ:
-		if (!txStatus.empty())
-		{
-			internalAppTxRsp resp = txStatus.read();
-			if (resp.error == 0)
-			{
-				currentSessionID = resp.sessionID;
-				iperfFsmState = START_PKG;
-			}
-			else
-			{
-				//Check if connection  was torn down
-				if (resp.error == 1)
-				{
-					std::cout << "Connection was torn down. " << resp.sessionID << std::endl;
-					numConnections--;
-				}
-				else
-				{
-					txMetaDataBuffer.write(appTxMeta(resp.sessionID, pkgWordCount*(WIDTH/8)));
-					//sessionIt++;
-				}
-			}
-		}
-		break;
-	case START_PKG:
-		{
-			if (!timeOver)
-			{
-				txMetaDataBuffer.write(appTxMeta(currentSessionID, pkgWordCount*(WIDTH/8)));
+                if (closeIt != numConnections) {
+                    clientFsmState = WAIT_CON;
+                }
+            }
+            break;
+    }
 
-			}
-			else
-			{
-				stopSend = true;
-				std::cout<<"timeOver"<<std::endl;
-			}
-			net_axis<WIDTH> currWord;
-			for (int i = 0; i < (WIDTH/64); i++)
-			{
-				#pragma HLS UNROLL
-				currWord.data(i*64+63, i*64) = 0x3736353433323130;
-				currWord.keep(i*8+7, i*8) = 0xff;
-			}
-			currWord.last = 0;
-			txDataBuffer.write(currWord);
-			wordCount = 1;
-			iperfFsmState = WRITE_PKG;
-		}
-		break;
-	case WRITE_PKG:
-	{
-		wordCount++;
-		net_axis<WIDTH> currWord;
-		for (int i = 0; i < (WIDTH/64); i++) 
-		{
-			#pragma HLS UNROLL
-			currWord.data(i*64+63, i*64) = 0x3736353433323130;
-			currWord.keep(i*8+7, i*8) = 0xff;
-		}
-		currWord.last = (wordCount == pkgWordCount);
-		txDataBuffer.write(currWord);
-		if (currWord.last)
-		{
-			wordCount = 0;
-			iperfFsmState = (packetGap != 0) ? PKG_GAP : CHECK_TIME;
-			// iperfFsmState = CHECK_TIME;
-		}
-	}
-		break;
-	case CHECK_TIME:
-		if (stopSend && closeIt == numConnections)
-		{
-			iperfFsmState = IDLE;
-		}
-		else
-		{
-			if(stopSend)
-			{
-				closeConnection.write(currentSessionID);
-				closeIt++;
-			}
-			
-			if (closeIt != numConnections)
-			{
-				iperfFsmState = CHECK_REQ;
-			}
-		}
-		break;
-	case PKG_GAP:
-		packetGapCounter++;
-		if (packetGapCounter == packetGap)
-		{
-			packetGapCounter = 0;
-			iperfFsmState = CHECK_TIME;
-		}
-		break;
-	} //switch
-
-	//clock
-	if (!stopSignal.empty())
-	{
-		stopSignal.read(timeOver);
-	}
-	
+    // Clock handling
+    if (!stopSignal.empty()) {
+        stopSignal.read(timeOver);
+    }
 }
+
 
 template <int WIDTH>
 void server(	hls::stream<ap_uint<16> >&		listenPort,
@@ -410,70 +281,30 @@ void server(	hls::stream<ap_uint<16> >&		listenPort,
 				hls::stream<appNotification>&	notifications,
 				hls::stream<appReadRequest>&	readRequest,
 				hls::stream<ap_uint<16> >&		rxMetaData,
-				hls::stream<net_axis<WIDTH> >&	rxDataBuffer)
+				hls::stream<ap_axiu<DATA_WIDTH, 0, 0, 0> >& rxData,
+				hls::stream<http::http_request_spt>& http_request,
+				hls::stream<http::pkt512>& http_request_headers,
+				hls::stream<http::pkt512>& http_request_body)	
 {
 #pragma HLS PIPELINE II=1
 #pragma HLS INLINE off
+#pragma HLS INTERFACE ap_ctrl_none port=return
+#pragma HLS DATAFLOW
 
-   enum listenFsmStateType {OPEN_PORT, WAIT_PORT_STATUS};
-   static listenFsmStateType listenState = OPEN_PORT;
-	enum consumeFsmStateType {WAIT_PKG, CONSUME};
-	static consumeFsmStateType  serverFsmState = WAIT_PKG;
-	#pragma HLS RESET variable=listenState
-
-	switch (listenState)
-	{
-	case OPEN_PORT:
-		// Open Port 5001
-		listenPort.write(5001);
-		listenState = WAIT_PORT_STATUS;
-		break;
-	case WAIT_PORT_STATUS:
-		if (!listenPortStatus.empty())
-		{
-			bool open = listenPortStatus.read();
-			if (!open)
-			{
-				listenState = OPEN_PORT;
-			}
-		}
-		break;
-	}
+	http::listen_port(
+		listenPort, 
+		listenPortStatus, 
+		80);
 	
-	if (!notifications.empty())
-	{
-		appNotification notification = notifications.read();
+	http::request_processor(
+		notifications, 
+		readRequest, 
+		rxMetaData, 
+		rxData, 
+		http_request, 
+		http_request_headers, 
+		http_request_body);
 
-		if (notification.length != 0)
-		{
-			readRequest.write(appReadRequest(notification.sessionID, notification.length));
-		}
-	}
-
-	switch (serverFsmState)
-	{
-	case WAIT_PKG:
-		if (!rxMetaData.empty() && !rxDataBuffer.empty())
-		{
-			rxMetaData.read();
-			net_axis<WIDTH> receiveWord = rxDataBuffer.read();
-			if (!receiveWord.last)
-			{
-				serverFsmState = CONSUME;
-			}
-		}
-		break;
-	case CONSUME:
-		if (!rxDataBuffer.empty())
-		{
-			net_axis<WIDTH> receiveWord = rxDataBuffer.read();
-			if (receiveWord.last)
-			{
-				serverFsmState = WAIT_PKG;
-			}
-		}
-		break;
-	}
 }
 
 void clock( hls::stream<bool>&	startSignal,
@@ -508,19 +339,18 @@ void clock( hls::stream<bool>&	startSignal,
    }
 }
 
-
 void http_client(	hls::stream<ap_uint<16> >& listenPort,
 					hls::stream<bool>& listenPortStatus,
 					hls::stream<appNotification>& notifications,
 					hls::stream<appReadRequest>& readRequest,
 					hls::stream<ap_uint<16> >& rxMetaData,
 					hls::stream<ap_axiu<DATA_WIDTH, 0, 0, 0> >& rxData,
-					hls::stream<ipTuple>& openConnection,
-					hls::stream<openStatus>& openConStatus,
-					hls::stream<ap_uint<16> >& closeConnection,
-					hls::stream<appTxMeta>& txMetaData,
-					hls::stream<ap_axiu<DATA_WIDTH, 0, 0, 0> >& txData,
-					hls::stream<appTxRsp>& txStatus,
+					hls::stream<ipTuple>& openConnection, 				// NOT USED
+					hls::stream<openStatus>& openConStatus, 			// NOT USED 
+					hls::stream<ap_uint<16> >& closeConnection,         // NOT USED
+					hls::stream<appTxMeta>& txMetaData,                 // NOT USED
+					hls::stream<ap_axiu<DATA_WIDTH, 0, 0, 0> >& txData, // NOT USED
+					hls::stream<appTxRsp>& txStatus,                    // NOT USED
 					ap_uint<1>		runExperiment,
 					ap_uint<1>		dualModeEn,
 					ap_uint<14>		useConn,
@@ -614,9 +444,10 @@ void http_client(	hls::stream<ap_uint<16> >& listenPort,
 	static hls::stream<net_axis<DATA_WIDTH> >	rxDataBuffer("rxDataBuffer");
 	#pragma HLS STREAM variable=rxDataBuffer depth=512
 
-	/*
-	 * Client
-	 */
+	hls::stream<http::http_request_spt> http_request("http_request");
+  	hls::stream<http::pkt512> http_request_headers("http_request_headers");
+  	hls::stream<http::pkt512> http_request_body("http_request_body");
+
 	status_handler(txStatus, txStatusBuffer);
 	openStatus_handler(openConStatus, openConStatusBuffer);
 	txMetaData_handler(txMetaDataBuffer, txMetaData);
@@ -624,46 +455,51 @@ void http_client(	hls::stream<ap_uint<16> >& listenPort,
 	rxDataBuffer_handler<DATA_WIDTH>(rxData, rxDataBuffer);
 
 	client<DATA_WIDTH>(	openConnection,
-			openConStatusBuffer,
-			closeConnection,
-			txMetaDataBuffer,
-			txDataBuffer,
-			txStatusBuffer,
-			startSignalFifo,
-			stopSignalFifo,
-			runExperiment,
-			dualModeEn,
-			useConn,
-			useIpAddr, //total ip addr used
-			pkgWordCount,
-			packetGap,
-			timeInSeconds,
-			regBasePort,
-			regIpAddress0,
-			regIpAddress1,
-			regIpAddress2,
-			regIpAddress3,
-			regIpAddress4,
-			regIpAddress5,
-			regIpAddress6,
-			regIpAddress7,
-			regIpAddress8,
-			regIpAddress9);
-
-	/*
-	 * Server
-	 */
+						openConStatusBuffer,
+						closeConnection,
+						txMetaDataBuffer,
+						txDataBuffer,
+						txStatusBuffer,
+						startSignalFifo,
+						stopSignalFifo,
+						runExperiment,
+						dualModeEn,
+						useConn,
+						useIpAddr,
+						pkgWordCount,
+						packetGap,
+						timeInSeconds,
+						regBasePort,
+						regIpAddress0,
+						regIpAddress1,
+						regIpAddress2,
+						regIpAddress3,
+						regIpAddress4,
+						regIpAddress5,
+						regIpAddress6,
+						regIpAddress7,
+						regIpAddress8,
+						regIpAddress9);
+	
 	server<DATA_WIDTH>(	listenPort,
 			listenPortStatus,
 			notifications,
 			readRequest,
 			rxMetaData,
-			rxDataBuffer);
+			rxData,
+			http_request,
+			http_request_headers,
+			http_request_body);
 
+	// Tie off unused ports
+	// tie_off_tcp_open_connection(openConnection, openConStatus);
+	// tie_off_tcp_close_connection(closeConnection);
+	// tie_off_tcp_tx(txMetaData, txData, txStatus);
+	
 	/*
 	 * Clock
 	 */
-	clock( startSignalFifo,
+	clock(startSignalFifo,
 			stopSignalFifo,
 			timeInCycles);
 }
