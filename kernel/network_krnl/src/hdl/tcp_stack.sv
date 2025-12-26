@@ -440,8 +440,8 @@ toe_ip toe_inst (
 .regSessionCount(session_count_data),
 .regSessionCount_ap_vld(session_count_valid),
 //for external RX Buffer
-.axis_data_count(rx_buffer_data_count_reg2),
-.axis_max_data_count(16'd1024),
+.axis_data_count_V(rx_buffer_data_count_reg2),
+.axis_max_data_count_V(16'd1024),
 
 .ap_clk(net_clk),                                                        // input aclk
 .ap_rst_n(net_aresetn_r)                                                   // input aresetn
